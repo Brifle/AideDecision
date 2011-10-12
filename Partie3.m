@@ -10,7 +10,7 @@ jugement = [6 5 5 5;
 
 echelleMax = 10;
 
-coef = [1 1 1 1];
+coef = [1 100 1 1];
 
 s = 0.7;
 v = 0.5;
@@ -64,6 +64,22 @@ for i=1:size(jugement, 1)
     end
 end
 
+
+%% Creation d'un graphe sous matlab
+
+A = zeros(size(coef, 2));
+
+for i=1:size(res, 1)
+    A(res(i, 1), res(i, 2)) = 1;
+end
+
+xy = [1 1;
+      2 1;
+      2 2;
+      1.5 3;
+      1 2];
+
+gplotd(A,xy);
 
 %% Ecriture du resultat dans un fichier parsable
 
