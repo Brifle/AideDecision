@@ -40,7 +40,7 @@ f1 = t4b * t2 + (t1 * t5' / 60)' - t4a;
 
 x1 = linprog(f1, A1, b1, [], [], zeros(6, 1));
 
-beneficemax = - f1 * x1;
+beneficemax = - f1 * x1 ;
 
 %% Problème 2 : l'Atelier
 
@@ -55,30 +55,31 @@ nbproduitmax = - f2 * x2;
 stockParProduit = [5 5 6 10 5 4];
 
 Asmax = A1;
-fsmax = stockParProduit * -1;
+f3 = stockParProduit * -1;
 bsmax = b1;
 
-xsmax = linprog(fsmax, Asmax, bsmax, [], [], zeros(6, 1));
+xsmax = linprog(f3, Asmax, bsmax, [], [], zeros(6, 1));
 
-stockmax = - fsmax * xsmax;
+stockmax = - f3 * xsmax;
 
 %% Problème 3 : Le responsable des stocks
 
 
 A3 = [A1; stockParProduit];
-f3 = f1;
+
 
 X = 0:stockmax/1000:stockmax;
 Y = ones(size(X));
 idx = 0;
 for i = X,
     b3 = [b1; i];
-    x3 = linprog(f3, A3, b3, [], [], zeros(6, 1));
+    x3 = linprog(f1, A3, b3, [], [], zeros(6, 1));
     
     idx = idx + 1;
-    Y(idx) = -f3 * x3;
+    Y(idx) = -f1 * x3;
 end
 
+figure;
 subplot(2,1,1);
 plot(X / stockmax * 100, Y);
 title('Bénéfice selon utilisation de la capacité de stockage');
@@ -91,37 +92,36 @@ title('Progression du bénéfice en fonction de l''utilisation de la capacité');
 ylabel('Bénéfice / utilisation de la capacité de stockage');
 xlabel('Pourcentage d''utilisation de la capacité de stockage');
 
+% Idéal trouvé graphiquement : 38.2
+b3 = [b1; 38.2];
+x3 = linprog(f1, A3, b3, [], [], zeros(6, 1));
+r3 = -f1 * x3;
+
 %% Problème 4 : Le responsable commercial
 
 cont4 = [1, 1, 1, -1, -1, -1;
          -1, -1, -1, 1, 1, 1]; 
 
 A4 = [A1; cont4];
-%f4 = f1; % <= Maximiser les bénéfices
-f4 = f2; % <= Maximiser la production
-X = 0:10:nbproduitmax;
+ % <= Maximiser les bénéfices
+X = 0:5:nbproduitmax;
 Xp = ones(size(X)); 
 Y = ones(size(X));
 idx = 0;
 for i = X,
     b4 = [b1; i; i];
-    x4 = linprog(f4, A4, b4, [], [], zeros(6, 1));
+    x4 = linprog(f1, A4, b4, [], [], zeros(6, 1));
     
     idx = idx + 1;
     Xp(idx) = [1, 1, 1, -1, -1, -1] * x4;
-    Y(idx) = -f4 * x4;
+    Y(idx) = -f1 * x4;
 end
 
-subplot(2,1,1);
+figure;
 plot(X, Y);
 title('Bénéfice par écart à l''égalité des deux groupes de produits');
 xlabel('Ecart entre les deux groupes (en nombre de produits)');
 ylabel('Bénéfice en millions d''euros');
-subplot(2,1,2);
-plot(X, Y./X);
-title('Progression du bénéfice en fonction de l''écart entre les deux groupes');
-xlabel('Ecart entre les deux groupes (en nombre de produits)');
-ylabel('Bénéfice / écart entre les deux groupes');
 figure;
 plot(X, Xp);
 title('Ecart réel par rapport à l''epsilon');
@@ -131,3 +131,56 @@ ylabel('<- Groupe D, E, F / Groupe A, B, C ->');
 % On trouve ici que si la personne veut augmenter ses bénéfices en se
 % séparant de l'égalité des groupes, il doit pencher vers le groupe ayant
 % pour produits D, E et F.
+
+% Idéal trouvé graphiquement : 15
+b4 = [b1; 15; 15];
+x4 = linprog(f1, A4, b4, [], [], zeros(6, 1));
+r4 = -f1 * x4;
+
+%Difference de quantité de produit entre chaque famille
+f4 = [1, 1, 1, -1, -1, -1];
+
+%% Problème 5 : Responsable du personnel
+
+cont5 = [20 19 7 28 7 27]; 
+
+A5 = [A1; cont5];
+X = 0:20:7000; % TODO: Fix arbitrary
+Y = ones(size(X));
+idx = 0;
+for theta = X,
+    b5 = [b1; theta];
+    x5 = linprog(f2, A5, b5, [], [], zeros(6, 1));
+    
+    idx = idx + 1;
+    Y(idx) = (-f2 * x5) ;
+end
+
+plot(X/ (4800 * 3)*100, Y);
+title('Nombre de produits par nombre de produits créés sur les machines dont l''utilisation est limitée');
+xlabel('Taux horaire d''utilisations des machines 1, 2 et 7');
+ylabel('Nombre de produits');
+
+b5 = [b1; 11.81];
+x5 = linprog(f5, A5, b5, [], [], zeros(6, 1));
+r5 = -f2 * x5;
+
+%
+f5 = -cont5;
+
+%% Matrice de gain
+
+%%Matrice de gain
+
+
+% gain = [ -f1*x1/-f1*x1 -f2*x1 -f3*x1 -f4*x1 -f5*x1;
+%          -f1*x2/-f1*x1 -f2*x2 -f3*x2 -f4*x2 -f5*x2;
+%          -f1*x3/-f1*x1 -f2*x3 -f3*x3 -f4*x3 -f5*x3;
+%          -f1*x4/-f1*x1 -f2*x4 -f3*x4 -f4*x4 -f5*x4;
+%          -f1*x5/-f1*x1 -f2*x5 -f3*x5 -f4*x5 -f5*x5];
+     
+gain = [ -f1*x1 -f2*x1 -f3*x1 -f4*x1 -f5*x1;
+         -f1*x2 -f2*x2 -f3*x2 -f4*x2 -f5*x2;
+         -f1*x3 -f2*x3 -f3*x3 -f4*x3 -f5*x3;
+         -f1*x4 -f2*x4 -f3*x4 -f4*x4 -f5*x4;
+         -f1*x5 -f2*x5 -f3*x5 -f4*x5 -f5*x5]
